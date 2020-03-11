@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visit counter</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css?family=Work+Sans:400,500,600,700&display=swap" rel="stylesheet">
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/3.3.3/adapter.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.10/vue.min.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+</head>
+
+<body>
+    <header>
+    </header>
+    <main>
+        <div class="scanner">
+            <div id="counter">
+            </div>
+            <div id="scan-field">
+                <div id="app">
+                    <div class="sidebar">
+                        <section class="cameras">
+                            <ul>
+                                <li v-if="cameras.length === 0" class="empty">No cameras found</li>
+                                <li v-for="camera in cameras">
+                                    <span v-if="camera.id == activeCameraId" :title="formatName(camera.name)"
+                                        class="active">{{ formatName(camera.name) }}</span>
+                                    <span v-if="camera.id != activeCameraId" :title="formatName(camera.name)">
+                                        <a @click.stop="selectCamera(camera)">{{ formatName(camera.name) }}</a>
+                                    </span>
+                                </li>
+                            </ul>
+                        </section>
+                        <section class="scans">
+                            <transition-group name="scans" tag="ul" id="scans">
+                                <label id="scan-content" v-for="scan in scans" :key="scan.date"
+                                    :title="scan.content">{{ scan.content }}</label>
+                            </transition-group>
+                        </section>
+                    </div>
+                    <div class="preview-container">
+                        <video id="preview"></video>
+                        <form id='form-send'>
+                            <input type="text" name="code" id="qr-code" value=>
+                            <button type="submit" id="send" value="submit">
+                                Submit
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-views">
+            <a id="list" href="">
+                <p>List</p>
+            </a>
+            <a id="scan" href="">
+                <p>Scan</p>
+            </a>
+        </div>
+    </main>
+</body>
+<script type="text/javascript" src="scanner.js"></script>
+<script>
+    //Form POST request
+    const form_send = document.getElementById('form-send')
+    const counter = document.getElementById('counter')
+    var input = document.getElementById('qr-code')
+
+    var node = document.getElementById('scans')
+    var observer = new MutationObserver(function (mutations, observer) {
+        for (var i = 0; i < mutations.length; ++i) {
+            // look through all added nodes of this mutation
+            for (var j = 0; j < mutations[i].addedNodes.length; ++j) {
+                // was a child added with ID of 'bar'?
+                if (mutations[i].addedNodes[j].id == "scan-content") {
+                    var scan_content = mutations[i].addedNodes[j]
+                    input.value = scan_content.textContent
+                    scan_content.style.display = "none"
+                }
+            }
+        }
+    });
+
+    observer.observe(node, { attributes: true, childList: true });
+
+    form_send.addEventListener('submit', function (e) {
+        e.preventDefault()
+
+        const formData = new FormData(this)
+        const searchParams = new URLSearchParams()
+
+        for (const pair of formData) {
+            searchParams.append(pair[0], pair[1])
+        }
+
+        fetch('http://localhost:5501/customers', {
+            method: 'post',
+            body: searchParams
+        }).then(function (response) {
+            return response.text()
+        }).then(function (text) {
+            var placeholder = JSON.parse(text)
+            var num = Number(placeholder.message)
+            if (num == 10)
+                counter.style.color = "green"
+            else
+                counter.style.color = "#F0F2F1"
+
+            counter.innerHTML = `Count: ` + placeholder.message
+        }).catch(function (error) {
+            console.log(error)
+        })
+    })
+</script>
+
+</html>

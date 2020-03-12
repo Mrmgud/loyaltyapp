@@ -104,7 +104,7 @@
             searchParams.append(pair[0], pair[1])
         }
 
-        fetch('http://localhost:5501/customers', {
+        fetch('http://localhost:5500/customers', {
             method: 'post',
             body: searchParams
         }).then(function (response) {

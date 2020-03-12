@@ -44,9 +44,10 @@
                         </section>
                     </div>
                     <div class="preview-container">
+                        <label id="scan-result"></label>
                         <video id="preview"></video>
                         <form id='form-send'>
-                            <input type="text" name="code" id="qr-code" value=>
+                            <input type="text" name="code" id="qr-code" value="">
                             <button type="submit" id="send" value="submit">
                                 Submit
                             </button>
@@ -68,11 +69,12 @@
 </body>
 <script type="text/javascript" src="scanner.js"></script>
 <script>
-    //Form POST request
     const form_send = document.getElementById('form-send')
     const counter = document.getElementById('counter')
+    const lblResult = document.getElementById('scan-result')
     var input = document.getElementById('qr-code')
 
+    //Getting scan input
     var node = document.getElementById('scans')
     var observer = new MutationObserver(function (mutations, observer) {
         for (var i = 0; i < mutations.length; ++i) {
@@ -82,14 +84,16 @@
                 if (mutations[i].addedNodes[j].id == "scan-content") {
                     var scan_content = mutations[i].addedNodes[j]
                     input.value = scan_content.textContent
+                    lblResult.textContent=scan_content.textContent
                     scan_content.style.display = "none"
                 }
             }
         }
     });
-
     observer.observe(node, { attributes: true, childList: true });
-
+    
+    
+    //Form POST request
     form_send.addEventListener('submit', function (e) {
         e.preventDefault()
 
